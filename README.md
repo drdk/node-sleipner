@@ -13,6 +13,7 @@ This is a caching and general performance enhancement library for [node.js](http
   * [Caching: Instance method](#caching-instance-method)
   * [General cache](#general-cache)
 * [Example](#example)
+* [Contributing or contacting me](#contribute-or-contact)
 
 <a name="how"/>
 ## How it works
@@ -106,3 +107,9 @@ class API
 # Specify what to cache
 Sleipner.method(API, "someMethod", duration: 30, expires: 120)
 ```
+
+<a name="contribute-or-contact"/>
+## Contributing or contacting me
+Most - if not all - contributions are welcome. If you want something and don't have the time to implement yourself, feel free to open an issue.
+
+You can get in touch with me on [Twitter](http://twitter.com/nicopersson) (though I rarely use it) or stalk me on [GitHub](http://github.com/spookd).
