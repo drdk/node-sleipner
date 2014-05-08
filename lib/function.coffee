@@ -44,7 +44,7 @@ module.exports = exports = class
     return utils.unixtime() + parseInt(@options.duration * 1000, 10)
 
   newExpires: =>
-    return if @options.expires isnt 0 then utils.unixtime() + parseInt(@options.expires * 1000, 10) else 0
+    return parseInt(@options.expires, 10)
 
   # Helpers: Reload logic
 
@@ -116,7 +116,7 @@ module.exports = exports = class
           data =
             duration: generateDuration()
             value:    result
-          console.log "DURATION", data.duration, "EXPIRES", generateExpires()
+
           sleipner.cache.set(cacheKey, data, generateExpires())
 
         if cbWhenReloaded

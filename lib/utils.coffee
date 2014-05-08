@@ -19,9 +19,8 @@ module.exports = exports =
     result = ""
 
     for input in inputs
-      continue if not input
-      if typeof(f) is "object"
-        result += JSON.stringify(input, fn)
+      if typeof(input) is "object"
+        result += JSON.stringify(input, this.stringifyFn)
       else
         result += input
 
