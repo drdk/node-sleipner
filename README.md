@@ -103,9 +103,6 @@ class API
         # logic
         callback(error, arg1, arg2, ..., argN)
 
-# Add the caching providers we want to use
-Sleipner.providers.add(new Memcached(["127.0.0.1"]))
-
 # Specify what to cache
 Sleipner.method(API, "someMethod", duration: 30, expires: 120)
 ```
