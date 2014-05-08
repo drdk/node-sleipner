@@ -1,5 +1,5 @@
 # Sleipner
-This is a caching, and general performance enhancement, library for [node.js](http://nodejs.org). Sleipner is also Odin's Eight Legged Horse.
+This is a caching and general performance enhancement library for [node.js](http://nodejs.org). Sleipner is also Odin's Eight Legged Horse.
 
 ![My little Sleipner](http://24.media.tumblr.com/tumblr_m4jjr17oGK1rwcxwko1_500.png)
 
