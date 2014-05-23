@@ -1,5 +1,8 @@
 utils = require("./utils")
 Queue = require("./queue")
+_     = require("lodash")
+
+CacheEntry = require("./cache-entry")
 
 module.exports = exports = class
   constructor: (cls, functionName, options, sleipner) ->
@@ -58,6 +61,7 @@ module.exports = exports = class
     return yes
 
   stop: (thisArg, args) =>
+    args = _.toArray(args)
     while (cb = @queue.dequeue())
       cb.apply(thisArg, args)
 
@@ -72,6 +76,8 @@ module.exports = exports = class
   # Rewrite original function
 
   rewrite: ->
+    self = this
+
     functionName     = @functionName
     options          = @options
     sleipner         = @sleipner
@@ -88,14 +94,22 @@ module.exports = exports = class
     getIsReloading = this.getIsReloading
     setIsReloading = this.setIsReloading
 
-    @cls[functionName] = (args...) ->
-      cb = args.pop()
+    @cls[functionName] = ->
+      lastArgumentsKey = _.keys(arguments).pop()
+      return unless lastArgumentsKey
+
+      cb   = arguments[lastArgumentsKey]
+      args = _.clone(arguments)
+
+      delete args[lastArgumentsKey]
+
       return unless start(cb)
 
-      cbWhenReloaded = no
-      thisArg        = this
+      executeCallbackWhenReloaded = no
+      thisArg = this
 
       # Generate a unqiue cache key for this type of call
+
       if options.cacheKey?
         if options.cacheKey instanceof Function
           cacheKey = options.cacheKey.apply(thisArg, args)
@@ -104,43 +118,33 @@ module.exports = exports = class
 
         return stop(thisArg, ["Invalid cache key"])
       else
-        cacheKey = "#{functionName}_#{utils.stringify(arguments)}"
+        cacheKey = "#{functionName}_#{originalFunction.toString()}_#{utils.stringify(arguments)}"
+      
+      cacheEntry = new CacheEntry(self, cacheKey)
 
       # The "fake" callback used to store any result
       # we might get from the original function
-      fakeCb = (error, result...) ->
-        console.log "CACHE RELOADED"
+
+      args[lastArgumentsKey] = ->
         setIsReloading(no)
 
-        if not error
-          data =
-            duration: generateDuration()
-            value:    result
+        cacheEntry.setArguments(_.clone(arguments))
+        cacheEntry.save()
 
-          sleipner.cache.set(cacheKey, data, generateExpires())
-
-        if cbWhenReloaded
-          result.unshift(error)
-
-          stop(thisArg, result)
-
-      fakeArgs = args.slice(0)
-      fakeArgs.push(fakeCb)
+        stop(thisArg, _.clone(arguments)) if executeCallbackWhenReloaded
 
       # Finally, check for cache hit
-      sleipner.cache.get cacheKey, (error, data) ->
-        if not error and data?.value?
-          console.log "CACHE HIT"
-          data.value.unshift(null)
-          stop(thisArg, data.value)
 
-          if data.duration < utils.unixtime() and not getIsReloading()
+      sleipner.cache.get cacheKey, (error, data) ->
+        if not error and cacheEntry.load(data)
+          stop(thisArg, cacheEntry.getArguments())
+
+          if cacheEntry.getShouldReload() and not getIsReloading()
             setIsReloading(yes)
-            originalFunction.apply(thisArg, fakeArgs)
+            originalFunction.apply(thisArg, _.toArray(args))
         else if not getIsReloading()
-          console.log "CACHE MISS"
           setIsReloading(yes)
-          cbWhenReloaded = yes
-          originalFunction.apply(thisArg, fakeArgs)
+          executeCallbackWhenReloaded = yes
+          originalFunction.apply(thisArg, _.toArray(args))
 
 
