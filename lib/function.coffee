@@ -6,7 +6,8 @@ CacheEntry = require("./cache-entry")
 
 module.exports = exports = class
   constructor: (cls, functionName, options, sleipner) ->
-    @queue = Queue()
+    @queues  = {}
+    @reloads = {}
 
     @originalFunction = cls[functionName]
     @cls              = cls
@@ -51,27 +52,31 @@ module.exports = exports = class
 
   # Helpers: Reload logic
 
-  start: (cb) =>
-    @queue.enqueue(cb)
+  start: (key, cb) =>
+    isActive = @queues[key]?
 
-    if @isActive is yes
-      return no 
+    @queues[key] ||= Queue()
+    @queues[key].enqueue(cb)
 
-    @isActive = yes
-    return yes
+    return not isActive
 
-  stop: (thisArg, args) =>
+  stop: (key, thisArg, args) =>
+    @queue = @queues[key]
+
     args = _.toArray(args)
-    while (cb = @queue.dequeue())
+    while @queue and (cb = @queue.dequeue())
       cb.apply(thisArg, args)
 
-    @isActive = no
+    delete @queues[key]
 
-  getIsReloading: =>
-    return @isReloading is yes
+  getIsReloading: (key) =>
+    return @reloads[key]?
 
-  setIsReloading: (isReloading) =>
-    @isReloading = isReloading
+  setIsReloading: (key, isReloading) =>
+    if not isReloading and @reloads[key]?
+      delete @reloads[key]
+    else if isReloading
+      @reloads[key] = yes
 
   # Rewrite original function
 
@@ -103,8 +108,6 @@ module.exports = exports = class
 
       delete args[lastArgumentsKey]
 
-      return unless start(cb)
-
       executeCallbackWhenReloaded = no
       thisArg = this
 
@@ -116,9 +119,13 @@ module.exports = exports = class
         else
           cacheKey = options.cacheKey
 
-        return stop(thisArg, ["Invalid cache key"])
+        return stop(cacheKey, thisArg, ["Invalid cache key"])
       else
         cacheKey = "#{functionName}_#{originalFunction.toString()}_#{utils.stringify(arguments)}"
+
+      cacheKey = utils.hash(cacheKey)
+
+      return unless start(cacheKey, cb)
       
       cacheEntry = new CacheEntry(self, cacheKey)
 
@@ -126,25 +133,25 @@ module.exports = exports = class
       # we might get from the original function
 
       args[lastArgumentsKey] = (error) ->
-        setIsReloading(no)
-        
+        setIsReloading(cacheKey, no)
+
         if not error
-          cacheEntry.setArguments(_.clone(arguments))
+          cacheEntry.setArguments(arguments)
           cacheEntry.save()
 
-        stop(thisArg, _.clone(arguments)) if executeCallbackWhenReloaded
+        stop(cacheKey, thisArg, arguments) if executeCallbackWhenReloaded
 
       # Finally, check for cache hit
 
       sleipner.cache.get cacheKey, (error, data) ->
         if not error and cacheEntry.load(data)
-          stop(thisArg, cacheEntry.getArguments())
+          stop(cacheKey, thisArg, cacheEntry.getArguments())
 
           if cacheEntry.getShouldReload() and not getIsReloading()
-            setIsReloading(yes)
+            setIsReloading(cacheKey, yes)
             originalFunction.apply(thisArg, _.toArray(args))
         else if not getIsReloading()
-          setIsReloading(yes)
+          setIsReloading(cacheKey, yes)
           executeCallbackWhenReloaded = yes
           originalFunction.apply(thisArg, _.toArray(args))
 
