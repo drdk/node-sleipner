@@ -125,11 +125,12 @@ module.exports = exports = class
       # The "fake" callback used to store any result
       # we might get from the original function
 
-      args[lastArgumentsKey] = ->
+      args[lastArgumentsKey] = (error) ->
         setIsReloading(no)
-
-        cacheEntry.setArguments(_.clone(arguments))
-        cacheEntry.save()
+        
+        if not error
+          cacheEntry.setArguments(_.clone(arguments))
+          cacheEntry.save()
 
         stop(thisArg, _.clone(arguments)) if executeCallbackWhenReloaded
 
