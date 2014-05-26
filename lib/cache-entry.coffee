@@ -1,12 +1,7 @@
 utils = require("./utils")
+_     = require("lodash")
 
 module.exports = exports = class
-  FRESH     = 0
-  STALE     = 1
-  EXCEPTION = 2
-
-  NULL_ERROR = -1
-
   constructor: (owner, cacheKey) ->
     @key     = cacheKey
     @owner   = owner
@@ -15,7 +10,7 @@ module.exports = exports = class
 
   # Setters
 
-  setArguments: (args) ->
+  setArguments: (args) =>
     return unless args?
 
     error = null
@@ -25,30 +20,31 @@ module.exports = exports = class
     if @data.args? and typeof @data.args is "object" and error
       @data.duration += 10000
     else
-      @data.args  = args
+      @data = {} unless typeof @data is "object"
+      @data.args  = _.clone(args)
       @data.error = error
 
   # Getters
 
-  getShouldReload: ->
+  getShouldReload: =>
     return @data?.duration? and @data.duration < utils.unixtime()
 
-  getArguments: ->
+  getArguments: =>
     return {} unless @data?.args? and typeof @data.args is "object"
     return @data.args
 
   # ...
 
-  load: (data) ->
+  load: (data) =>
     @data = data
 
     return data?.args? and not data.error
 
-  save: ->
-    args = @data.args
+  save: =>
+    args = _.toArray(@data.args)
     
     @data.duration = @owner.newDuration.apply(@owner, args)
     @owner.sleipner.cache.set(@key, @data, @owner.newExpires.apply(@owner, args))
 
-  toString: ->
+  toString: =>
     return JSON.stringify(@data)
