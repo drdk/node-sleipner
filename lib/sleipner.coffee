@@ -1,7 +1,11 @@
 utils = require("./utils")
 scls  = require("./class")
+CacheStats = require("./cache-stats")
 
 cacheProviders = []
+
+cacheSetStats = CacheStats()
+cacheGetStats = CacheStats()
 
 module.exports = exports =
   method: (cls, fn, options = {}) ->
@@ -14,6 +18,7 @@ module.exports = exports =
     set: (key, value, expires = 0) ->
       return if cacheProviders.length is 0
       key = utils.hash(key)
+      cacheSetStats.start(key)
 
       try
         value = JSON.stringify(value, utils.stringifyFn)
@@ -21,18 +26,23 @@ module.exports = exports =
         # ...
 
       utils.zip value, (error, buffer) ->
-        for provider in cacheProviders
-          provider.set(key, buffer, expires)
+        if not error
+          for provider in cacheProviders
+            provider.set(key, buffer, expires)
+
+        cacheSetStats.stop(key)
 
     get: (key, cb) ->
       return cb("No providers added") if cacheProviders.length is 0
       key = utils.hash(key)
+      cacheGetStats.start(key)
 
       returned = no
       count    = cacheProviders.length
 
       triggerCb = (error, value) ->
         return if (error and count isnt 0) or returned
+        cacheGetStats.stop(key)
         returned = yes
         cb(error, value)
 
@@ -59,3 +69,11 @@ module.exports = exports =
       n = cacheProviders.indexOf(provider)
       if n isnt -1
         cacheProviders.splice(n, 1)
+
+  stats: ->
+    result =
+      cache_stats:
+        set: cacheSetStats.get()
+        get: cacheGetStats.get()
+
+    return result
