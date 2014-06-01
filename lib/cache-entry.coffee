@@ -5,7 +5,6 @@ module.exports = exports = class
   constructor: (owner, cacheKey) ->
     @key     = cacheKey
     @owner   = owner
-    @logger  = @owner.sleipner.logger
 
     @data  = {}
 
@@ -20,7 +19,7 @@ module.exports = exports = class
     # Error? Extend the current cache duration with 30 seconds
     if @data.args? or typeof @data.args is "object" and error
       @data.duration = utils.unixtime() + 30 * 1000
-      @logger.error "Tried to set erroneous arguments (#{error.toString()}) of a - before - valid cache (extending duration with 30 seconds from now)"
+      @owner.sleipner.logger.error "Tried to set erroneous arguments (#{error.toString()}) of a - before - valid cache (extending duration with 30 seconds from now)"
     else
       @data = {} unless typeof @data is "object"
       @data.args  = _.clone(args)
@@ -29,10 +28,10 @@ module.exports = exports = class
   # Getters
 
   getShouldReload: =>
-    return @data?.duration? and @data.duration < utils.unixtime()
+    return @data? and @data.duration? and @data.duration < utils.unixtime()
 
   getArguments: =>
-    return {} unless @data?.args? and typeof @data.args is "object"
+    return {} unless @data? and @data.args? and typeof @data.args is "object"
     return @data.args
 
   # ...

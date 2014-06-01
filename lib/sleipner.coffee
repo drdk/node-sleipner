@@ -7,7 +7,7 @@ cacheProviders = []
 cacheSetStats = CacheStats()
 cacheGetStats = CacheStats()
 
-module.exports = exports =
+Sleipner =
   logger: console
 
   cacheMiss: 0
@@ -84,3 +84,5 @@ module.exports = exports =
         get:  cacheGetStats.get()
 
     return result
+
+module.exports = exports = Sleipner
