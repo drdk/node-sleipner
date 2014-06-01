@@ -8,6 +8,8 @@ cacheSetStats = CacheStats()
 cacheGetStats = CacheStats()
 
 module.exports = exports =
+  logger: console
+
   method: (cls, fn, options = {}) ->
     result = new scls(cls, this)
     return result.method(fn, options)

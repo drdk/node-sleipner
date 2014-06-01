@@ -1,6 +1,5 @@
 class Stats
   constructor: ->
-    console.log "STATS INITIALIZED"
     @totalRequests = 0
     @totalTime     = 0.0
 
@@ -45,8 +44,8 @@ class Stats
     @stats.longest.sort (a, b) ->
       return b.time - a.time
 
-    @stats.longest  = @stats.longest.splice(0, 10)
-    @stats.shortest = @stats.shortest.splice(0, 10)
+    @stats.longest  = @stats.longest.splice(0, 20)
+    @stats.shortest = @stats.shortest.splice(0, 20)
 
   get: ->
     return @stats

@@ -135,9 +135,8 @@ module.exports = exports = class
       args[lastArgumentsKey] = (error) ->
         setIsReloading(cacheKey, no)
 
-        if not error
-          cacheEntry.setArguments(arguments)
-          cacheEntry.save()
+        cacheEntry.setArguments(arguments)
+        cacheEntry.save()
 
         stop(cacheKey, thisArg, arguments) if executeCallbackWhenReloaded
 
