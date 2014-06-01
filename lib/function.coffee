@@ -144,12 +144,18 @@ module.exports = exports = class
 
       sleipner.cache.get cacheKey, (error, data) ->
         if not error and cacheEntry.load(data)
+          console.log "HIT"
+          sleipner.cacheHit++
+
           stop(cacheKey, thisArg, cacheEntry.getArguments())
 
           if cacheEntry.getShouldReload() and not getIsReloading()
             setIsReloading(cacheKey, yes)
             originalFunction.apply(thisArg, _.toArray(args))
         else if not getIsReloading()
+          console.log "MISS"
+          sleipner.cacheMiss++
+
           setIsReloading(cacheKey, yes)
           executeCallbackWhenReloaded = yes
           originalFunction.apply(thisArg, _.toArray(args))

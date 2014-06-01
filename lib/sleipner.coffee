@@ -10,6 +10,9 @@ cacheGetStats = CacheStats()
 module.exports = exports =
   logger: console
 
+  cacheMiss: 0
+  cacheHit:  0
+
   method: (cls, fn, options = {}) ->
     result = new scls(cls, this)
     return result.method(fn, options)
@@ -75,7 +78,9 @@ module.exports = exports =
   stats: ->
     result =
       cache_stats:
-        set: cacheSetStats.get()
-        get: cacheGetStats.get()
+        miss: this.cacheMiss
+        hit:  this.cacheHit
+        set:  cacheSetStats.get()
+        get:  cacheGetStats.get()
 
     return result
