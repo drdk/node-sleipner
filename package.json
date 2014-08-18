@@ -1,6 +1,6 @@
 {
   "name": "sleipner-js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A caching library for NodeJS",
   "main": "index.js",
   "scripts": {

@@ -16,8 +16,8 @@ module.exports = exports = class
     error = null
     error = args['0'] if args['0']?
 
-    # Error? Extend the current cache duration with 30 seconds
-    if @data.args? or typeof @data.args is "object" and error isnt null
+    # Error? Extend the current cache (if any) duration with 30 seconds
+    if @data.args? and typeof @data.args is "object" and error isnt null
       @data.duration = utils.unixtime() + 30 * 1000
       @owner.sleipner.logger.error "Tried to set erroneous arguments (#{error.toString()}) of a - before - valid cache (extending duration with 30 seconds from now)"
     else
